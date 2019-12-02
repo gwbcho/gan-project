@@ -1,0 +1,5 @@
+tqdm
+requests
+tensorflow_gan
+imageio
+tensorflow_hub
