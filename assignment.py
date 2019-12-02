@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization, LeakyReLU, Reshape, Conv2DTranspose
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization, LeakyReLU, Reshape, Conv2DTranspose, ReLU
 from preprocess import load_image_batch
 import tensorflow_gan as tfgan
 import tensorflow_hub as hub
@@ -121,17 +121,17 @@ class Generator_Model(tf.keras.Model):
             [
                 Dense(4*4*512, use_bias=False),
                 BatchNormalization(),
-                LeakyReLU(alpha=0.02),
+                ReLU(),
                 Reshape(4, 4, 512),
                 Conv2DTranspose(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
-                LeakyReLU(alpha=0.02),
+                ReLU(),
                 Conv2DTranspose(filters=128, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
-                LeakyReLU(alpha=0.02),
+                ReLU(),
                 Conv2DTranspose(filters=64, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
-                LeakyReLU(alpha=0.02),
+                ReLU(),
                 Conv2DTranspose(
                     filters=3,
                     kernel_size=5,
