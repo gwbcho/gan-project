@@ -244,9 +244,9 @@ def train(generator, discriminator, dataset_iterator, manager):
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
 
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            generator_images = generator(noise)
+            gen_output = generator(noise)
             disc_real_output = discriminator(batch)
-            disc_fake_output = discriminator(generator_images)
+            disc_fake_output = discriminator(gen_output)
             gen_loss = generator.loss_function(disc_fake_output)
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
 
