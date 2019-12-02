@@ -63,6 +63,9 @@ parser.add_argument('--save-every', type=int, default=500,
 parser.add_argument('--device', type=str, default='GPU:0' if gpu_available else 'CPU:0',
                     help='specific the device of computation eg. CPU:0, GPU:0, GPU:1, GPU:2, ... ')
 
+parser.add_argument('--scale-model', type=int, default=1,
+                    help='Scale model filter layers to user specifications')
+
 args = parser.parse_args()
 
 ## --------------------------------------------------------------------------------------
@@ -119,17 +122,32 @@ class Generator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Dense(4*4*512, use_bias=False),
+                Dense(4*4*512*args.scale_model, use_bias=False),
                 BatchNormalization(),
                 ReLU(),
-                Reshape([4, 4, 512]),
-                Conv2DTranspose(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
+                Reshape([4, 4, 512*args.scale_model]),
+                Conv2DTranspose(
+                    filters=256*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 ReLU(),
-                Conv2DTranspose(filters=128, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2DTranspose(
+                    filters=128*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 ReLU(),
-                Conv2DTranspose(filters=64, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2DTranspose(
+                    filters=64*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 ReLU(),
                 Conv2DTranspose(
@@ -178,15 +196,15 @@ class Discriminator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Conv2D(filters=64, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(filters=64*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=128, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(filters=128*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(filters=256*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=512, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(filters=512*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
                 Flatten(),
@@ -238,6 +256,7 @@ def train(generator, discriminator, dataset_iterator, manager):
 
     :return: The average FID score over the epoch
     """
+    cumulative = 0
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
         # TODO: Train the model
@@ -265,6 +284,9 @@ def train(generator, discriminator, dataset_iterator, manager):
         if iteration % 500 == 0:
             fid_ = fid_function(batch, gen_output)
             print('**** INCEPTION DISTANCE: %g ****' % fid_)
+            cumulative += fid_
+
+    return cumulative/iteration
 
 
 # Test the model by generating some samples.
