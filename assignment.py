@@ -122,7 +122,7 @@ class Generator_Model(tf.keras.Model):
                 Dense(4*4*512, use_bias=False),
                 BatchNormalization(),
                 ReLU(),
-                Reshape(4, 4, 512),
+                Reshape([4, 4, 512]),
                 Conv2DTranspose(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
                 BatchNormalization(),
                 ReLU(),
