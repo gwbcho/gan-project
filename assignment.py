@@ -143,6 +143,7 @@ class Generator_Model(tf.keras.Model):
         )
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
     @tf.function
     def call(self, inputs):
@@ -165,11 +166,7 @@ class Generator_Model(tf.keras.Model):
         :return: loss, the cross entropy loss, scalar
         """
         # TODO: Calculate the loss
-        loss = tf.keras.losses.binary_crossentropy(
-            tf.ones_like(disc_fake_output),
-            disc_fake_output,
-            from_logits=True
-        )
+        loss = self.cross_entropy(tf.ones_like(disc_fake_output), disc_fake_output)
         return loss
 
 class Discriminator_Model(tf.keras.Model):
@@ -198,6 +195,7 @@ class Discriminator_Model(tf.keras.Model):
         )
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
     @tf.function
     def call(self, inputs):
@@ -220,16 +218,8 @@ class Discriminator_Model(tf.keras.Model):
 
         :return: loss, the combined cross entropy loss, scalar
         """
-        real_loss = tf.keras.losses.binary_crossentropy(
-            tf.ones_like(disc_real_output),
-            real_output,
-            from_logits=True
-        )
-        fake_loss = tf.keras.losses.binary_crossentropy(
-            tf.zeros_like(disc_fake_output),
-            fake_output,
-            from_logits=True
-        )
+        real_loss = self.cross_entropy(tf.ones_like(disc_real_output), real_output)
+        fake_loss = self.cross_entropy(tf.zeros_like(disc_fake_output), fake_output)
         total_loss = real_loss + fake_loss
         return total_loss
 
@@ -261,7 +251,7 @@ def train(generator, discriminator, dataset_iterator, manager):
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
 
         gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        disc_grads = gen_tape.gradient(disc_loss, discriminator.trainable_variables)
+        disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
         # apply back propagation using determined gradients using the model optimizer
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
@@ -287,7 +277,7 @@ def test(generator):
     :return: None
     """
     # TODO: Replace 'None' with code to sample a batch of random images
-    img = None
+    img = generator(tf.random.uniform([args.batch_size, 100]))
 
     ### Below, we've already provided code to save these generated images to files on disk
     # Rescale the image from (-1, 1) to (0, 255)
