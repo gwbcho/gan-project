@@ -257,6 +257,7 @@ def train(generator, discriminator, dataset_iterator, manager):
     :return: The average FID score over the epoch
     """
     cumulative = 0
+    eval_count = 1
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
         # TODO: Train the model
@@ -285,8 +286,9 @@ def train(generator, discriminator, dataset_iterator, manager):
             fid_ = fid_function(batch, gen_output)
             print('**** INCEPTION DISTANCE: %g ****' % fid_)
             cumulative += fid_
+            eval_count += 1
 
-    return cumulative/iteration
+    return cumulative/eval_count
 
 
 # Test the model by generating some samples.
