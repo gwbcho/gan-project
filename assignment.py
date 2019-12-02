@@ -161,7 +161,7 @@ class Generator_Model(tf.keras.Model):
         )
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
     @tf.function
     def call(self, inputs):
@@ -213,7 +213,7 @@ class Discriminator_Model(tf.keras.Model):
         )
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
     @tf.function
     def call(self, inputs):
@@ -262,7 +262,6 @@ def train(generator, discriminator, dataset_iterator, manager):
     for iteration, batch in enumerate(dataset_iterator):
         # TODO: Train the model
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             gen_output = generator(noise)
             disc_real_output = discriminator(batch)
@@ -272,9 +271,11 @@ def train(generator, discriminator, dataset_iterator, manager):
 
         gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
         disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-        # apply back propagation using determined gradients using the model optimizer
-        generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
+        # apply back propagation using determined gradients and the model optimizer
         discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
+        # update generator multiple times
+        for _ in range(args.num_gen_updates):
+            generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
 
         # Save
         if iteration % args.save_every == 0:
