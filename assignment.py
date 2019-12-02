@@ -261,7 +261,7 @@ def train(generator, discriminator, dataset_iterator, manager):
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
 
         gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        disc_grads = gen_tape.gradient(disc_loss, discriminator.trainable_variables)
+        disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
         # apply back propagation using determined gradients using the model optimizer
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
@@ -287,7 +287,7 @@ def test(generator):
     :return: None
     """
     # TODO: Replace 'None' with code to sample a batch of random images
-    img = None
+    img = generator(tf.random.uniform([args.batch_size, 100]))
 
     ### Below, we've already provided code to save these generated images to files on disk
     # Rescale the image from (-1, 1) to (0, 255)
