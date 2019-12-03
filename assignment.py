@@ -274,6 +274,9 @@ def train(generator, discriminator, dataset_iterator, manager):
         discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
         # update generator multiple times
         for _ in range(args.num_gen_updates):
+            with tf.GradientTape() as gen_tape:
+                gen_output = generator(noise)
+                gen_loss = generator.loss_function(disc_fake_output)
             gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
             generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
 
