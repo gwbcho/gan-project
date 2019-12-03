@@ -189,7 +189,7 @@ class Generator_Model(tf.keras.Model):
         :return: loss, the cross entropy loss, scalar
         """
         # TODO: Calculate the loss
-        loss = tf.reduce_mean(self.cross_entropy(tf.ones_like(disc_fake_output), disc_fake_output))
+        loss = self.cross_entropy(tf.ones_like(disc_fake_output), disc_fake_output)
         return loss
 
 class Discriminator_Model(tf.keras.Model):
@@ -270,12 +270,8 @@ class Discriminator_Model(tf.keras.Model):
 
         :return: loss, the combined cross entropy loss, scalar
         """
-        real_loss = tf.reduce_mean(
-            self.cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
-        )
-        fake_loss = tf.reduce_mean(
-            self.cross_entropy(tf.zeros_like(disc_fake_output), disc_fake_output)
-        )
+        real_loss = self.cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
+        fake_loss = self.cross_entropy(tf.zeros_like(disc_fake_output), disc_fake_output)
         total_loss = real_loss + fake_loss
         return total_loss
 
@@ -332,6 +328,8 @@ def train(generator, discriminator, dataset_iterator, manager):
         if iteration % 500 == 0:
             fid_ = fid_function(batch, gen_output)
             print('**** INCEPTION DISTANCE: %g ****' % fid_)
+            print('Discriminator loss:', disc_loss)
+            print('Generator loss:', gen_loss)
             cumulative += fid_
             eval_count += 1
 
