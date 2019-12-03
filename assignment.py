@@ -261,8 +261,8 @@ def train(generator, discriminator, dataset_iterator, manager):
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
         # Train the model
-        noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
         if iteration % args.num_gen_updates == 0:
+            noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
             with tf.GradientTape() as disc_tape:
                 gen_output = generator(noise)
                 disc_real_output = discriminator(batch)
@@ -275,6 +275,7 @@ def train(generator, discriminator, dataset_iterator, manager):
                 zip(disc_grads, discriminator.trainable_variables)
             )
         # update generator multiple times
+        noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
         with tf.GradientTape() as gen_tape:
             gen_output = generator(noise)
             disc_real_output = discriminator(batch)
