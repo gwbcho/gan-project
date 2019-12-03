@@ -163,6 +163,7 @@ class Generator_Model(tf.keras.Model):
                 )
             ]
         )
+        self.model.build([None, args.z_dim])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy() # from_logits=True?
@@ -243,6 +244,7 @@ class Discriminator_Model(tf.keras.Model):
                 )
             ]
         )
+        self.model.build([None, 64, 64, 3])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
