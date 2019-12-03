@@ -298,7 +298,7 @@ def train(generator, discriminator, dataset_iterator, manager):
             cumulative += fid_
             eval_count += 1
 
-    return cumulative/eval_count
+    return float(cumulative/eval_count)
 
 
 # Test the model by generating some samples.
