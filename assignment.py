@@ -257,7 +257,7 @@ def train(generator, discriminator, dataset_iterator, manager):
     :return: The average FID score over the epoch
     """
     cumulative = 0
-    eval_count = 1
+    eval_count = 0
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
         # TODO: Train the model
