@@ -172,7 +172,7 @@ class Generator_Model(tf.keras.Model):
 
         :return: prescaled generated images, shape=[batch_size, height, width, channel]
         """
-        return self.model.predict_on_batch(inputs)
+        return self.model(inputs)
 
     @tf.function
     def loss_function(self, disc_fake_output):
@@ -248,7 +248,7 @@ class Discriminator_Model(tf.keras.Model):
         :return: a batch of values indicating whether the image is real or fake, shape=[batch_size, 1]
         """
         # TODO: Call the forward pass
-        return self.model.predict_on_batch(inputs)
+        return self.model(inputs)
 
     def loss_function(self, disc_real_output, disc_fake_output):
         """
