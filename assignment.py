@@ -122,7 +122,7 @@ class Generator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Dense(4*4*512*args.scale_model, use_bias=False),
+                Dense(4*4*512*args.scale_model),
                 BatchNormalization(),
                 ReLU(),
                 Reshape([4, 4, 512*args.scale_model]),
