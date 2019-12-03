@@ -172,7 +172,7 @@ class Generator_Model(tf.keras.Model):
 
         :return: prescaled generated images, shape=[batch_size, height, width, channel]
         """
-        return self.model(inputs)
+        return self.model.predict_on_batch(inputs)
 
     @tf.function
     def loss_function(self, disc_fake_output):
@@ -196,19 +196,42 @@ class Discriminator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Conv2D(filters=64*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=64*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=128*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=128*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=256*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=256*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=512*args.scale_model, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=512*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same'
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
                 Flatten(),
-                Dense(1, activation=tf.keras.activations.sigmoid)
+                Dense(
+                    1,
+                    activation=tf.keras.activations.sigmoid
+                )
             ]
         )
         # optimizer
@@ -225,7 +248,7 @@ class Discriminator_Model(tf.keras.Model):
         :return: a batch of values indicating whether the image is real or fake, shape=[batch_size, 1]
         """
         # TODO: Call the forward pass
-        return self.model(inputs)
+        return self.model.predict_on_batch(inputs)
 
     def loss_function(self, disc_real_output, disc_fake_output):
         """
@@ -263,7 +286,7 @@ def train(generator, discriminator, dataset_iterator, manager):
         # Train the model
         # update generator every iteration
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-        with tf.GradientTape(watch_accessed_variables=False) as gen_tape:
+        with tf.GradientTape() as gen_tape:
             gen_output = generator(noise)
             gen_tape.watch(gen_output)
             disc_fake_output = discriminator(gen_output)
