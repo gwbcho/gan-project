@@ -130,7 +130,8 @@ class Generator_Model(tf.keras.Model):
                     filters=256*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -138,7 +139,8 @@ class Generator_Model(tf.keras.Model):
                     filters=128*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -146,7 +148,8 @@ class Generator_Model(tf.keras.Model):
                     filters=64*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -155,7 +158,8 @@ class Generator_Model(tf.keras.Model):
                     kernel_size=5,
                     strides=(2, 2),
                     padding='same',
-                    activation=tf.keras.activations.tanh
+                    activation=tf.keras.activations.tanh,
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 )
             ]
         )
@@ -200,14 +204,16 @@ class Discriminator_Model(tf.keras.Model):
                     filters=64*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 LeakyReLU(alpha=0.02),
                 Conv2D(
                     filters=128*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
@@ -215,7 +221,8 @@ class Discriminator_Model(tf.keras.Model):
                     filters=256*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
@@ -223,14 +230,16 @@ class Discriminator_Model(tf.keras.Model):
                     filters=512*args.scale_model,
                     kernel_size=5,
                     strides=(2, 2),
-                    padding='same'
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
                 Flatten(),
                 Dense(
                     1,
-                    activation=tf.keras.activations.sigmoid
+                    activation=tf.keras.activations.sigmoid,
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 )
             ]
         )
