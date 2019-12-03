@@ -265,8 +265,11 @@ def train(generator, discriminator, dataset_iterator, manager):
         gen_output = generator(noise)
         with tf.GradientTape() as disc_tape:
             disc_real_output = discriminator(batch)
+            disc_tape.watch(disc_real_output)
             disc_fake_output = discriminator(gen_output)
+            disc_tape.watch(disc_fake_output)
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
+            disc_tape.watch(disc_loss)
         disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
         # apply back propagation using determined gradients and the model optimizer
         discriminator.optimizer.apply_gradients(
@@ -277,8 +280,10 @@ def train(generator, discriminator, dataset_iterator, manager):
             noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
             with tf.GradientTape() as gen_tape:
                 gen_output = generator(noise)
+                gen_tape.watch(gen_output)
                 disc_fake_output = discriminator(gen_output)
                 gen_loss = generator.loss_function(disc_fake_output)
+                gen_tape.watch(gen_loss)
             gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
             generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
 
