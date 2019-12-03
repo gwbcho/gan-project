@@ -263,28 +263,27 @@ def train(generator, discriminator, dataset_iterator, manager):
         # Train the model
         # update generator every iteration
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-        with tf.GradientTape() as gen_tape:
+        with tf.GradientTape(watch_accessed_variables=False) as gen_tape:
             gen_output = generator(noise)
             gen_tape.watch(gen_output)
             disc_fake_output = discriminator(gen_output)
             gen_loss = generator.loss_function(disc_fake_output)
             gen_tape.watch(gen_loss)
-            # update discriminator every num_gen_updates steps
-            if iteration % args.num_gen_updates == 0:
-                with tf.GradientTape() as disc_tape:
-                    disc_tape.watch(disc_fake_output)
-                    disc_real_output = discriminator(batch)
-                    disc_tape.watch(disc_real_output)
-                    disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
-                    disc_tape.watch(disc_loss)
-                disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-                # apply back propagation using determined gradients and the model optimizer
-                discriminator.optimizer.apply_gradients(
-                    zip(disc_grads, discriminator.trainable_variables)
-                )
-        # update generator with respective gradients
         gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
+        # update discriminator every num_gen_updates steps
+        if iteration % args.num_gen_updates == 0:
+            with tf.GradientTape() as disc_tape:
+                disc_tape.watch(disc_fake_output)
+                disc_real_output = discriminator(batch)
+                disc_tape.watch(disc_real_output)
+                disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
+                disc_tape.watch(disc_loss)
+            disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+            # apply back propagation using determined gradients and the model optimizer
+            discriminator.optimizer.apply_gradients(
+                zip(disc_grads, discriminator.trainable_variables)
+            )
 
         # Save
         if iteration % args.save_every == 0:
