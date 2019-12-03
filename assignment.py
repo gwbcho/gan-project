@@ -165,7 +165,7 @@ class Generator_Model(tf.keras.Model):
         )
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy() # from_logits=True?
 
     @tf.function
     def call(self, inputs):
@@ -188,7 +188,7 @@ class Generator_Model(tf.keras.Model):
         :return: loss, the cross entropy loss, scalar
         """
         # TODO: Calculate the loss
-        loss = self.cross_entropy(tf.ones_like(disc_fake_output), disc_fake_output)
+        loss = tf.reduce_mean(self.cross_entropy(tf.ones_like(disc_fake_output), disc_fake_output))
         return loss
 
 class Discriminator_Model(tf.keras.Model):
@@ -268,8 +268,12 @@ class Discriminator_Model(tf.keras.Model):
 
         :return: loss, the combined cross entropy loss, scalar
         """
-        real_loss = self.cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
-        fake_loss = self.cross_entropy(tf.zeros_like(disc_fake_output), disc_fake_output)
+        real_loss = tf.reduce_mean(
+            self.cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
+        )
+        fake_loss = tf.reduce_mean(
+            self.cross_entropy(tf.zeros_like(disc_fake_output), disc_fake_output)
+        )
         total_loss = real_loss + fake_loss
         return total_loss
 
