@@ -261,26 +261,26 @@ def train(generator, discriminator, dataset_iterator, manager):
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
         # Train the model
-        if iteration % args.num_gen_updates == 0:
-            noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-            gen_output = generator(noise)
-            with tf.GradientTape() as disc_tape:
-                disc_real_output = discriminator(batch)
-                disc_fake_output = discriminator(gen_output)
-                disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
-            disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-            # apply back propagation using determined gradients and the model optimizer
-            discriminator.optimizer.apply_gradients(
-                zip(disc_grads, discriminator.trainable_variables)
-            )
-        # update generator multiple times
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-        with tf.GradientTape() as gen_tape:
-            gen_output = generator(noise)
+        gen_output = generator(noise)
+        with tf.GradientTape() as disc_tape:
+            disc_real_output = discriminator(batch)
             disc_fake_output = discriminator(gen_output)
-            gen_loss = generator.loss_function(disc_fake_output)
-        gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
+            disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
+        disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+        # apply back propagation using determined gradients and the model optimizer
+        discriminator.optimizer.apply_gradients(
+            zip(disc_grads, discriminator.trainable_variables)
+        )
+        # update generator multiple times
+        for _ in range(args.num_gen_updates):
+            noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
+            with tf.GradientTape() as gen_tape:
+                gen_output = generator(noise)
+                disc_fake_output = discriminator(gen_output)
+                gen_loss = generator.loss_function(disc_fake_output)
+            gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
+            generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
 
         # Save
         if iteration % args.save_every == 0:
