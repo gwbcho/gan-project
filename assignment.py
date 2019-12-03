@@ -273,8 +273,6 @@ def train(generator, discriminator, dataset_iterator, manager):
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         # update discriminator every num_gen_updates steps
         if iteration % args.num_gen_updates == 0:
-            noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-            gen_output = generator(noise)
             with tf.GradientTape() as disc_tape:
                 disc_real_output = discriminator(batch)
                 disc_tape.watch(disc_real_output)
