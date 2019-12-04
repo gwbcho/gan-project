@@ -166,7 +166,7 @@ class Generator_Model(tf.keras.Model):
         self.model.build([None, args.z_dim])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True) # from_logits=True?
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy() # from_logits=True?
 
     @tf.function
     def call(self, inputs):
@@ -239,6 +239,7 @@ class Discriminator_Model(tf.keras.Model):
                 Flatten(),
                 Dense(
                     1,
+                    activation=tf.keras.activations.sigmoid,
                     kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 )
             ]
@@ -246,7 +247,7 @@ class Discriminator_Model(tf.keras.Model):
         self.model.build([None, 64, 64, 3])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
     @tf.function
     def call(self, inputs):
@@ -305,14 +306,14 @@ def train(generator, discriminator, dataset_iterator, manager):
         disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
         # apply back propagation using determined gradients and the model optimizer
         discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
-        # update discriminator every num_gen_updates steps
+        # update generator every num_gen_updates steps
         if iteration % args.num_gen_updates == 0:
             # apply gradients to generator
             gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
             generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         else:
             # close reference to unused tape
-            del disc_tape
+            del gen_tape
 
         # Save
         if iteration % args.save_every == 0:
