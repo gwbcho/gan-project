@@ -296,7 +296,7 @@ def train(generator, discriminator, dataset_iterator, manager):
     for iteration, batch in enumerate(dataset_iterator):
         # Train the model
         # update generator every iteration
-        noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
+        noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim], -1, 1))
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             gen_output = generator(noise)
             disc_fake_output = discriminator(gen_output)
@@ -345,7 +345,7 @@ def test(generator):
     :return: None
     """
     # TODO: Replace 'None' with code to sample a batch of random images
-    img = generator(tf.random.uniform([args.batch_size, args.z_dim]))
+    img = generator(tf.random.uniform([args.batch_size, args.z_dim], -1, 1))
 
     ### Below, we've already provided code to save these generated images to files on disk
     # Rescale the image from (-1, 1) to (0, 255)
