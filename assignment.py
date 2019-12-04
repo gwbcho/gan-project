@@ -63,6 +63,9 @@ parser.add_argument('--save-every', type=int, default=500,
 parser.add_argument('--device', type=str, default='GPU:0' if gpu_available else 'CPU:0',
                     help='specific the device of computation eg. CPU:0, GPU:0, GPU:1, GPU:2, ... ')
 
+parser.add_argument('--scale-model', type=int, default=1,
+                    help='Scale model filter layers to user specifications')
+
 args = parser.parse_args()
 
 ## --------------------------------------------------------------------------------------
@@ -119,17 +122,35 @@ class Generator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Dense(4*4*512, use_bias=False),
+                Dense(4*4*512*args.scale_model),
                 BatchNormalization(),
                 ReLU(),
-                Reshape([4, 4, 512]),
-                Conv2DTranspose(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
+                Reshape([4, 4, 512*args.scale_model]),
+                Conv2DTranspose(
+                    filters=256*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 ReLU(),
-                Conv2DTranspose(filters=128, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2DTranspose(
+                    filters=128*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 ReLU(),
-                Conv2DTranspose(filters=64, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2DTranspose(
+                    filters=64*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 ReLU(),
                 Conv2DTranspose(
@@ -137,13 +158,15 @@ class Generator_Model(tf.keras.Model):
                     kernel_size=5,
                     strides=(2, 2),
                     padding='same',
-                    activation=tf.keras.activations.tanh
+                    activation=tf.keras.activations.tanh,
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
                 )
             ]
         )
+        self.model.build([None, args.z_dim])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy() # from_logits=True?
 
     @tf.function
     def call(self, inputs):
@@ -154,7 +177,7 @@ class Generator_Model(tf.keras.Model):
 
         :return: prescaled generated images, shape=[batch_size, height, width, channel]
         """
-        return self.model.predict(inputs)
+        return self.model(inputs)
 
     @tf.function
     def loss_function(self, disc_fake_output):
@@ -178,24 +201,53 @@ class Discriminator_Model(tf.keras.Model):
         # TODO: Define the model, loss, and optimizer
         self.model = tf.keras.Sequential(
             [
-                Conv2D(filters=64, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=64*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=128, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=128*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=256, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=256*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
-                Conv2D(filters=512, kernel_size=5, strides=(2, 2), padding='same'),
+                Conv2D(
+                    filters=512*args.scale_model,
+                    kernel_size=5,
+                    strides=(2, 2),
+                    padding='same',
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                ),
                 BatchNormalization(),
                 LeakyReLU(alpha=0.02),
                 Flatten(),
-                Dense(1, activation=tf.keras.activations.sigmoid)
+                Dense(
+                    1,
+                    activation=tf.keras.activations.sigmoid,
+                    kernel_initializer=tf.keras.initializers.RandomNormal(0, 0.02)
+                )
             ]
         )
+        self.model.build([None, 64, 64, 3])
         # optimizer
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=args.learn_rate, beta_1=args.beta1)
-        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
     @tf.function
     def call(self, inputs):
@@ -207,7 +259,7 @@ class Discriminator_Model(tf.keras.Model):
         :return: a batch of values indicating whether the image is real or fake, shape=[batch_size, 1]
         """
         # TODO: Call the forward pass
-        return self.model.predict(inputs)
+        return self.model(inputs)
 
     def loss_function(self, disc_real_output, disc_fake_output):
         """
@@ -218,8 +270,8 @@ class Discriminator_Model(tf.keras.Model):
 
         :return: loss, the combined cross entropy loss, scalar
         """
-        real_loss = self.cross_entropy(tf.ones_like(disc_real_output), real_output)
-        fake_loss = self.cross_entropy(tf.zeros_like(disc_fake_output), fake_output)
+        real_loss = self.cross_entropy(tf.ones_like(disc_real_output), disc_real_output)
+        fake_loss = self.cross_entropy(tf.zeros_like(disc_fake_output), disc_fake_output)
         total_loss = real_loss + fake_loss
         return total_loss
 
@@ -238,23 +290,33 @@ def train(generator, discriminator, dataset_iterator, manager):
 
     :return: The average FID score over the epoch
     """
+    cumulative = 0
+    eval_count = 0
     # Loop over our data until we run out
     for iteration, batch in enumerate(dataset_iterator):
-        # TODO: Train the model
-        noise = tf.random.uniform([args.batch_size, args.z_dim])
-
+        # Train the model
+        # update generator every iteration
+        noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim], -1, 1))
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            generator_images = generator(noise)
+            gen_output = generator(noise)
+            disc_fake_output = discriminator(gen_output)
             disc_real_output = discriminator(batch)
-            disc_fake_output = discriminator(generator_images)
             gen_loss = generator.loss_function(disc_fake_output)
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
-
+        # apply gradients to generator
         gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-        # apply back propagation using determined gradients using the model optimizer
+        # apply back propagation using determined gradients and the model optimizer
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
-        discriminator.optimizer.apply_gradients(zip(disc_grads, discriminator.trainable_variables))
+        # update generator every num_gen_updates steps
+        if iteration % args.num_gen_updates == 0:
+            disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+            # apply back propagation using determined gradients and the model optimizer
+            discriminator.optimizer.apply_gradients(
+                zip(disc_grads, discriminator.trainable_variables)
+            )
+        else:
+            # close reference to unused tape
+            del disc_tape
 
         # Save
         if iteration % args.save_every == 0:
@@ -265,6 +327,12 @@ def train(generator, discriminator, dataset_iterator, manager):
         if iteration % 500 == 0:
             fid_ = fid_function(batch, gen_output)
             print('**** INCEPTION DISTANCE: %g ****' % fid_)
+            # print('Discriminator loss:', float(disc_loss))
+            # print('Generator loss:', float(gen_loss))
+            cumulative += fid_
+            eval_count += 1
+
+    return float(cumulative/eval_count)
 
 
 # Test the model by generating some samples.
@@ -277,7 +345,10 @@ def test(generator):
     :return: None
     """
     # TODO: Replace 'None' with code to sample a batch of random images
-    img = generator(tf.random.uniform([args.batch_size, args.z_dim]))
+    img = tf.cast(
+        generator(tf.Variable(tf.random.uniform([args.batch_size, args.z_dim], -1, 1))),
+        tf.float32
+    ).numpy()
 
     ### Below, we've already provided code to save these generated images to files on disk
     # Rescale the image from (-1, 1) to (0, 255)
