@@ -308,7 +308,7 @@ def train(generator, discriminator, dataset_iterator, manager):
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         # update discriminator every num_gen_updates steps
         if iteration % args.num_gen_updates == 0:
-            disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+            disc_grads = tape.gradient(disc_loss, discriminator.trainable_variables)
             # apply back propagation using determined gradients and the model optimizer
             discriminator.optimizer.apply_gradients(
                 zip(disc_grads, discriminator.trainable_variables)
