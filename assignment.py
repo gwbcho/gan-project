@@ -348,7 +348,7 @@ def test(generator):
     img = tf.cast(
         generator(tf.Variable(tf.random.uniform([args.batch_size, args.z_dim], -1, 1))),
         tf.float32
-    )
+    ).numpy()
 
     ### Below, we've already provided code to save these generated images to files on disk
     # Rescale the image from (-1, 1) to (0, 255)
