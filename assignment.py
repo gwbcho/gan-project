@@ -297,23 +297,25 @@ def train(generator, discriminator, dataset_iterator, manager):
         # Train the model
         # update generator every iteration
         noise = tf.Variable(tf.random.uniform([args.batch_size, args.z_dim]))
-        with tf.GradientTape(persistent=True) as tape:
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             gen_output = generator(noise)
             disc_fake_output = discriminator(gen_output)
             disc_real_output = discriminator(batch)
             gen_loss = generator.loss_function(disc_fake_output)
             disc_loss = discriminator.loss_function(disc_real_output, disc_fake_output)
         # apply gradients to generator
-        gen_grads = tape.gradient(gen_loss, generator.trainable_variables)
+        gen_grads = gen_tape.gradient(gen_loss, generator.trainable_variables)
         generator.optimizer.apply_gradients(zip(gen_grads, generator.trainable_variables))
         # update discriminator every num_gen_updates steps
         if iteration % args.num_gen_updates == 0:
-            disc_grads = tape.gradient(disc_loss, discriminator.trainable_variables)
+            disc_grads = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
             # apply back propagation using determined gradients and the model optimizer
             discriminator.optimizer.apply_gradients(
                 zip(disc_grads, discriminator.trainable_variables)
             )
-        del tape
+        else:
+            # close reference to unused tape
+            del disc_tape
 
         # Save
         if iteration % args.save_every == 0:
